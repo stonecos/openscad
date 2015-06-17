@@ -35,6 +35,7 @@
 #include "context.h"
 #include "calc.h"
 #include "mathc99.h"
+#include "cgalutils2.h"
 #include <sstream>
 #include <assert.h>
 #include <boost/foreach.hpp>
@@ -505,6 +506,23 @@ Geometry *PrimitiveNode::createGeometry() const
 		PolySet *p = new PolySet(3);
 		g = p;
 		p->setConvexity(this->convexity);
+		if (this->faces->type() == Value::UNDEFINED) {
+			// give us the convex hull
+			std::vector<Vector3d> points;
+
+			for (size_t j=0; j<this->points->toVector().size(); j++) {
+				double px, py, pz;
+				if (!this->points->toVector()[j].getVec3(px, py, pz) ||
+					isinf(px) || isinf(py) || isinf(pz)) {
+						PRINTB("ERROR: Unable to convert point at index %d to a vec3 of numbers", j);
+						return p;
+				}
+				points.push_back(Vector3d(px, py, pz));
+			}
+			CGALUtils::applyHull(points, *p);
+			break;
+		}
+
 		for (size_t i=0; i<this->faces->toVector().size(); i++)
 		{
 			p->append_poly();
