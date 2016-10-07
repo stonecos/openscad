@@ -32,6 +32,7 @@
 #include "expression.h"
 #include "builtin.h"
 #include "printutils.h"
+#include "markernode.h"
 #include <cstdint>
 #include <sstream>
 
@@ -42,6 +43,7 @@ public: // types
 		CHILD,
 		CHILDREN,
 		ECHO,
+                MARKER,
 		ASSIGN,
 		FOR,
 		LET,
@@ -258,23 +260,32 @@ AbstractNode *ControlModule::instantiate(const Context* /*ctx*/, const ModuleIns
 	}
 		break;
 
+       case MARKER:
 	case ECHO: {
 		node = new GroupNode(inst);
 		std::stringstream msg;
-		msg << "ECHO: ";
-		for (size_t i = 0; i < inst->arguments.size(); i++) {
-			if (i > 0) msg << ", ";
-			if (!evalctx->getArgName(i).empty()) msg << evalctx->getArgName(i) << " = ";
-			ValuePtr val = evalctx->getArgValue(i);
-			if (val->type() == Value::STRING) {
-				msg << '"' << val->toString() << '"';
-			} else {
-				msg << val->toString();
-			}
-		}
-		PRINTB("%s", msg.str());
-	}
-		break;
+                if (type == ECHO) {
+                    msg << "ECHO: ";
+                }
+                for (size_t i = 0; i < inst->arguments.size(); i++) {
+                    if (i > 0) msg << ", ";
+                    if (!evalctx->getArgName(i).empty()) msg << evalctx->getArgName(i) << " = ";
+                    ValuePtr val = evalctx->getArgValue(i);
+                    if (val->type() == Value::STRING) {
+                        msg << '"' << val->toString() << '"';
+                    } else {
+                        msg << val->toString();
+                    }
+                }
+                if (type == ECHO) {
+                    PRINTB("%s", msg.str());
+                } else {
+                    MarkerNode *markernode = new MarkerNode(inst);
+                    markernode->value = msg.str();
+                    node = markernode;
+                }
+	    }
+            break;
 
 	case LET: {
 		node = new GroupNode(inst);
@@ -338,6 +349,7 @@ void register_builtin_control()
 	Builtins::init("child", new ControlModule(ControlModule::CHILD));
 	Builtins::init("children", new ControlModule(ControlModule::CHILDREN));
 	Builtins::init("echo", new ControlModule(ControlModule::ECHO));
+	Builtins::init("marker", new ControlModule(ControlModule::MARKER));
 	Builtins::init("assign", new ControlModule(ControlModule::ASSIGN));
 	Builtins::init("for", new ControlModule(ControlModule::FOR));
 	Builtins::init("let", new ControlModule(ControlModule::LET));
