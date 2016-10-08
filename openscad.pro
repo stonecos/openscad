@@ -184,6 +184,9 @@ CONFIG += freetype
 CONFIG += fontconfig
 CONFIG += gettext
 CONFIG += libxml2
+CONFIG += libgif
+CONFIG += vpx
+CONFIG += xvidcore
 
 #Uncomment the following line to enable the QScintilla editor
 !nogui {
@@ -336,6 +339,8 @@ HEADERS += src/version_check.h \
            src/boost-utils.h \
            src/LibraryInfo.h \
            src/svg.h \
+           src/video.h \
+           src/video/video_png.h \
            \
            src/lodepng.h \
            src/OffscreenView.h \
@@ -412,6 +417,8 @@ SOURCES += \
            src/parsersettings.cc \
            src/stl-utils.cc \
            src/boost-utils.cc \
+           src/video.cc \
+           src/video/video_png.cc \
            src/PlatformUtils.cc \
            src/LibraryInfo.cc \
            \
