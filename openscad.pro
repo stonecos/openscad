@@ -264,6 +264,7 @@ HEADERS += src/version_check.h \
            src/csgops.h \
            src/CSGTreeNormalizer.h \
            src/CSGTreeEvaluator.h \
+           src/CSGSubsetBuilder.h \
            src/dxfdata.h \
            src/dxfdim.h \
            src/export.h \
@@ -276,6 +277,7 @@ HEADERS += src/version_check.h \
            src/feature.h \
            src/node.h \
            src/csgnode.h \
+           src/primitivenode.h \
            src/offsetnode.h \
            src/linearextrudenode.h \
            src/rotateextrudenode.h \
@@ -381,8 +383,10 @@ SOURCES += \
            src/modcontext.cc \
            src/evalcontext.cc \
            src/csgnode.cc \
+           src/primitivenode.cc \
            src/CSGTreeNormalizer.cc \
            src/CSGTreeEvaluator.cc \
+           src/CSGSubsetBuilder.cc \
            src/Geometry.cc \
            src/Polygon2d.cc \
            src/clipper-utils.cc \

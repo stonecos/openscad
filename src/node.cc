@@ -36,10 +36,8 @@
 
 size_t AbstractNode::idx_counter;
 
-AbstractNode::AbstractNode(const ModuleInstantiation *mi)
+AbstractNode::AbstractNode(const ModuleInstantiation *mi) : modinst(mi), idx(idx_counter++)
 {
-	modinst = mi;
-	idx = idx_counter++;
 }
 
 AbstractNode::~AbstractNode()
@@ -72,6 +70,21 @@ std::string AbstractIntersectionNode::name() const
   // We write intersection here since the module will have to be evaluated
 	// before we get here and it will not longer retain the intersection_for parameters
 	return "intersection";
+}
+
+bool AbstractNode::isBackground() const
+{
+	return this->modinst && this->modinst->isBackground();
+}
+
+bool AbstractNode::isHighlight() const
+{
+	return this->modinst && this->modinst->isHighlight();
+}
+
+bool AbstractNode::isRoot() const
+{
+	return this->modinst && this->modinst->isRoot();
 }
 
 void AbstractNode::progress_prepare()
