@@ -55,6 +55,7 @@
 #ifdef ENABLE_CGAL
 #include "CGAL_Nef_polyhedron.h"
 #include "cgalutils.h"
+#include "CGALCache.h"
 #endif
 
 #include "csgnode.h"
@@ -146,7 +147,8 @@ static void help(const char *progname, bool failure = false)
          "%2%[ --imgsize=width,height ] [ --projection=(o)rtho|(p)ersp] \\\n"
          "%2%[ --render | --preview[=throwntogether] ] \\\n"
          "%2%[ --colorscheme=[Cornfield|Sunset|Metallic|Starnight|BeforeDawn|Nature|DeepOcean] ] \\\n"
-         "%2%[ --csglimit=num ]"
+         "%2%[ --csglimit=num ] \\\n"
+         "%2%[ --cachefile cache_file --cachefilesize=num ]"
 #ifdef ENABLE_EXPERIMENTAL
          " [ --enable=<feature> ] \\\n"
          "%2%[ -p <Parameter Filename>] [-P <Parameter Set>] "
@@ -834,6 +836,8 @@ int main(int argc, char **argv)
 		("colorscheme", po::value<string>(), "colorscheme")
 		("debug", po::value<string>(), "special debug info")
 		("quiet,q", "quiet mode (don't print anything *except* errors)")
+		("cachefile", po::value<string>(), "cache filename")
+		("cachefilesize", po::value<unsigned int>()->default_value(1024), "size in MiB, default is 1024MiB")
 		("o,o", po::value<string>(), "out-file")
 		("p,p", po::value<string>(), "parameter file")
 		("P,P", po::value<string>(), "parameter set")
@@ -925,6 +929,12 @@ int main(int argc, char **argv)
 			commandline_commands += ";\n";
 		}
 	}
+
+	if (vm.count("cachefile")) {
+		CGALCache::cachefile = vm["cachefile"].as<string>();
+		CGALCache::cachefilesize = vm["cachefilesize"].as<unsigned int>();
+	}
+
 #ifdef ENABLE_EXPERIMENTAL
 	if (vm.count("enable")) {
 		for(const auto &feature : vm["enable"].as<vector<string>>()) {
