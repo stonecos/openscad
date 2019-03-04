@@ -38,6 +38,7 @@
 #include <assert.h>
 #include <boost/lexical_cast.hpp>
 #include <boost/filesystem.hpp>
+#include <nowide/cstdio.hpp>
 namespace fs = boost::filesystem;
 
 //isatty for visual c++ and mingw-cross-env
@@ -298,7 +299,7 @@ void includefile()
   }
   else {
     rootmodule->registerInclude(localpath.generic_string(), localpath.generic_string());
-    PRINTB("WARNING: Can't open include file '%s'.", localpath.generic_string());
+    PRINTB("WARNING: Can't find include file '%s'.", localpath.generic_string());
     return;
   };
 
@@ -309,7 +310,7 @@ void includefile()
 
   handle_dep(fullname);
 
-  yyin = fopen(fullname.c_str(), "r");
+  yyin = nowide::fopen(fullname.c_str(), "r");
   if (!yyin) {
     PRINTB("WARNING: Can't open include file '%s'.", localpath.generic_string());
     filename_stack.pop_back();

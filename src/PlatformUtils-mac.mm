@@ -7,6 +7,13 @@
 
 #include "version.h"
 
+void PlatformUtils::initPlatform() {
+#ifdef Q_OS_MAC
+    bool isGuiLaunched = getenv("GUI_LAUNCHED") != nullptr;
+    if (isGuiLaunched) set_output_handler(CocoaUtils::nslog, nullptr);
+#endif
+}
+
 std::string PlatformUtils::pathSeparatorChar()
 {
 	return ":";
@@ -97,6 +104,3 @@ const std::string PlatformUtils::sysinfo(bool extended)
 
   return result;
 }
-
-void PlatformUtils::ensureStdIO(void) {}
-

@@ -119,10 +119,9 @@
 #define QT_FILE_SAVE_COMMIT if (saveOk) { saveOk = file.commit(); } else { file.cancelWriting(); }
 #endif
 
-#include <fstream>
-
 #include <algorithm>
 #include <boost/version.hpp>
+#include <nowide/fstream.hpp>
 #include <sys/stat.h>
 
 #ifdef ENABLE_CGAL
@@ -140,7 +139,6 @@
 #include "FontCache.h"
 #include "PrintInitDialog.h"
 #include "input/InputDriverManager.h"
-#include <cstdio>
 #include <QtNetwork>
 
 // Global application state
@@ -170,8 +168,8 @@ QAction *findAction(const QList<QAction *> &actions, const std::string &name)
 			auto foundAction = findAction(action->menu()->actions(), name);
 			if (foundAction) return foundAction;
 		}
-   }
-   return nullptr;
+	}
+	return nullptr;
 }
 
 } // namespace
@@ -361,9 +359,9 @@ MainWindow::MainWindow(const QString &filename)
 	connect(this->editActionZoomTextIn, SIGNAL(triggered()), editor, SLOT(zoomIn()));
 	connect(this->editActionZoomTextOut, SIGNAL(triggered()), editor, SLOT(zoomOut()));
 	connect(this->editActionPreferences, SIGNAL(triggered()), this, SLOT(preferences()));
-    // Edit->Find
-    connect(this->editActionFind, SIGNAL(triggered()), this, SLOT(showFind()));
-    connect(this->editActionFindAndReplace, SIGNAL(triggered()), this, SLOT(showFindAndReplace()));
+	// Edit->Find
+	connect(this->editActionFind, SIGNAL(triggered()), this, SLOT(showFind()));
+	connect(this->editActionFindAndReplace, SIGNAL(triggered()), this, SLOT(showFindAndReplace()));
 #ifdef Q_OS_WIN
 	this->editActionFindAndReplace->setShortcut(QKeySequence(Qt::CTRL + Qt::SHIFT + Qt::Key_F));
 #endif
@@ -444,7 +442,7 @@ MainWindow::MainWindow(const QString &filename)
 	connect(this->viewActionHideToolBars, SIGNAL(triggered()), this, SLOT(hideToolbars()));
 	connect(this->viewActionHideEditor, SIGNAL(triggered()), this, SLOT(hideEditor()));
 	connect(this->viewActionHideConsole, SIGNAL(triggered()), this, SLOT(hideConsole()));
-    connect(this->viewActionHideParameters, SIGNAL(triggered()), this, SLOT(hideParameters()));
+	connect(this->viewActionHideParameters, SIGNAL(triggered()), this, SLOT(hideParameters()));
 	// Help menu
 	connect(this->helpActionAbout, SIGNAL(triggered()), this, SLOT(helpAbout()));
 	connect(this->helpActionHomepage, SIGNAL(triggered()), this, SLOT(helpHomepage()));
@@ -565,7 +563,7 @@ MainWindow::MainWindow(const QString &filename)
 	bool hideEditor = settings.value("view/hideEditor").toBool();
 	bool hideCustomizer = settings.value("view/hideCustomizer").toBool();
 	bool hideToolbar = settings.value("view/hideToolbar").toBool();
-	
+
 	// make sure it looks nice..
 	auto windowState = settings.value("window/state", QByteArray()).toByteArray();
 	restoreState(windowState);
@@ -641,14 +639,14 @@ void MainWindow::addKeyboardShortCut(const QList<QAction *> &actions)
 	for (auto &action : actions) {
 		// prevent adding shortcut twice if action is added to multiple toolbars
 		if (action->toolTip().contains("&nbsp;")) {
-	    continue;
+			continue;
 		}
-		
+
 		const QString shortCut(action->shortcut().toString(QKeySequence::NativeText));
 		if (shortCut.isEmpty()) {
-	    continue;
+			continue;
 		}
-		
+
 		const QString toolTip("%1 &nbsp;<span style=\"color: gray; font-size: small; font-style: italic\">%2</span>");
 		action->setToolTip(toolTip.arg(action->toolTip(), shortCut));
 	}
@@ -915,11 +913,11 @@ void MainWindow::setFileName(const QString &filename)
 		setWindowFilePath(this->fileName);
 		this->parameterWidget->readFile(this->fileName);
 		QDir::setCurrent(fileinfo.dir().absolutePath());
-		this->top_ctx.setDocumentPath(fileinfo.dir().absolutePath().toLocal8Bit().constData());
+		this->top_ctx.setDocumentPath(fileinfo.dir().absolutePath().toStdString());
 	}
 	editorTopLevelChanged(editorDock->isFloating());
 	consoleTopLevelChanged(consoleDock->isFloating());
- 	parameterTopLevelChanged(parameterDock->isFloating());
+	parameterTopLevelChanged(parameterDock->isFloating());
 }
 
 void MainWindow::updateRecentFiles()
@@ -1018,13 +1016,13 @@ void MainWindow::refreshDocument()
 		QFile file(this->fileName);
 		if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
 			PRINTB("Failed to open file %s: %s",
-						 this->fileName.toLocal8Bit().constData() % file.errorString().toLocal8Bit().constData());
+					this->fileName.toStdString() % file.errorString().toStdString());
 		}
 		else {
 			QTextStream reader(&file);
 			reader.setCodec("UTF-8");
 			auto text = reader.readAll();
-			PRINTB("Loaded design '%s'.", this->fileName.toLocal8Bit().constData());
+			PRINTB("Loaded design '%s'.", this->fileName.toStdString());
 			if (editor->toPlainText() != text) {
 				editor->setPlainText(text);
 				setContentsChanged();
@@ -1249,7 +1247,7 @@ void MainWindow::instantiateRoot()
 		FileContext filectx(&top_ctx);
 		this->absolute_root_node = this->root_module->instantiateWithFileContext(&filectx, &this->root_inst, nullptr);
 		this->updateCamera(filectx);
-		
+
 		if (this->absolute_root_node) {
 			// Do we have an explicit root node (! modifier)?
 			if (!(this->root_node = find_root_tag(this->absolute_root_node))) {
@@ -1289,12 +1287,12 @@ void MainWindow::compileCSG()
 		connect(this->progresswidget, SIGNAL(requestShow()), this, SLOT(showProgress()));
 
 #ifdef ENABLE_CGAL
-			GeometryEvaluator geomevaluator(this->tree);
+		GeometryEvaluator geomevaluator(this->tree);
 #else
-			// FIXME: Will we support this?
+		// FIXME: Will we support this?
 #endif
 #ifdef ENABLE_OPENCSG
-			CSGTreeEvaluator csgrenderer(this->tree, &geomevaluator);
+		CSGTreeEvaluator csgrenderer(this->tree, &geomevaluator);
 #endif
 
 		progress_report_prep(this->root_node, report_func, this);
@@ -1340,7 +1338,7 @@ void MainWindow::compileCSG()
 		if (highlight_terms.size() > 0) {
 			PRINTB("Compiling highlights (%d CSG Trees)...", highlight_terms.size());
 			this->processEvents();
-		
+
 			this->highlights_products.reset(new CSGProducts());
 			for (unsigned int i = 0; i < highlight_terms.size(); i++) {
 				auto nterm = normalizer.normalize(highlight_terms[i]);
@@ -1350,12 +1348,12 @@ void MainWindow::compileCSG()
 		else {
 			this->highlights_products.reset();
 		}
-	
+
 		const auto &background_terms = csgrenderer.getBackgroundNodes();
 		if (background_terms.size() > 0) {
 			PRINTB("Compiling background (%d CSG Trees)...", background_terms.size());
 			this->processEvents();
-		
+
 			this->background_products.reset(new CSGProducts());
 			for (unsigned int i = 0; i < background_terms.size(); i++) {
 				auto nterm = normalizer.normalize(background_terms[i]);
@@ -1444,7 +1442,7 @@ void MainWindow::clearRecentFiles()
 void MainWindow::updateRecentFileActions()
 {
 	auto files = UIUtils::recentFiles();
-	
+
 	for (int i = 0; i < files.size(); ++i) {
 		this->actionRecentFile[i]->setText(QFileInfo(files[i]).fileName());
 		this->actionRecentFile[i]->setData(files[i]);
@@ -1499,8 +1497,8 @@ void MainWindow::writeBackup(QFile *file)
 	writer.setCodec("UTF-8");
 	writer << this->editor->toPlainText();
 	this->parameterWidget->writeBackupFile(file->fileName());
-	
-	PRINTB("Saved backup file: %s", file->fileName().toUtf8().constData());
+
+	PRINTB("Saved backup file: %s", file->fileName().toStdString());
 }
 
 void MainWindow::saveBackup()
@@ -1511,7 +1509,7 @@ void MainWindow::saveBackup()
 		return;
 	}
 
-	auto backupPath = QString::fromLocal8Bit(path.c_str());
+	QString backupPath = QString::fromStdString(path);
 	if (!backupPath.endsWith("/")) backupPath.append("/");
 
 	QString basename = "unsaved";
@@ -1534,8 +1532,7 @@ void MainWindow::saveBackup()
 void MainWindow::saveError(const QIODevice &file, const std::string &msg)
 {
 	const std::string messageFormat = msg + " %s (%s)";
-	const char *fileName = this->fileName.toLocal8Bit().constData();
-	PRINTB(messageFormat.c_str(), fileName % file.errorString().toLocal8Bit().constData());
+	PRINTB(messageFormat.c_str(), this->fileName.toStdString() % file.errorString().toStdString());
 
 	const std::string dialogFormatStr = msg + "\n\"%1\"\n(%2)";
 	const QString dialogFormat(dialogFormatStr.c_str());
@@ -1574,7 +1571,7 @@ void MainWindow::actionSave()
 		bool saveOk = writer.status() == QTextStream::Ok;
 		QT_FILE_SAVE_COMMIT;
 		if (saveOk) {
-			PRINTB(_("Saved design '%s'."), this->fileName.toLocal8Bit().constData());
+			PRINTB(_("Saved design '%s'."), this->fileName.toStdString());
 			this->editor->setContentModified(false);
 		} else {
 			saveError(file, _("Error saving design"));
@@ -1597,8 +1594,8 @@ void MainWindow::actionSaveAs()
 			QFileInfo info(new_filename);
 			if (info.exists()) {
 				if (QMessageBox::warning(this, windowTitle(),
-																 QString(_("%1 already exists.\nDo you want to replace it?")).arg(info.fileName()),
-																 QMessageBox::Yes | QMessageBox::No, QMessageBox::No) != QMessageBox::Yes) {
+										QString(_("%1 already exists.\nDo you want to replace it?")).arg(info.fileName()),
+										QMessageBox::Yes | QMessageBox::No, QMessageBox::No) != QMessageBox::Yes) {
 					return;
 				}
 			}
@@ -1708,7 +1705,7 @@ void MainWindow::showFindAndReplace()
 {
 	this->findInputField->setFindCount(editor->updateFindIndicators(this->findInputField->text()));	
 	this->processEvents();
-	findTypeComboBox->setCurrentIndex(1); 
+	findTypeComboBox->setCurrentIndex(1);
 	replaceInputField->show();
 	replaceButton->show();
 	replaceAllButton->show();
@@ -1741,21 +1738,21 @@ void MainWindow::replaceAll()
 void MainWindow::convertTabsToSpaces()
 {
 	const auto text = this->editor->toPlainText();
-	
+
 	QString converted;
-  
+
 	int cnt = 4;
 	for (int idx = 0;idx < text.length();idx++) {
 		auto c = text.at(idx);
 		if (c == '\t') {
-	    for (; cnt > 0; cnt--) {
+			for (; cnt > 0; cnt--) {
 				converted.append(' ');
-	    }
+			}
 		} else {
-	    converted.append(c);
+			converted.append(c);
 		}
 		if (cnt <= 0 || c == '\n') {
-	    cnt = 5;
+			cnt = 5;
 		}
 		cnt--;
 	}
@@ -1879,7 +1876,7 @@ bool MainWindow::fileChangedOnDisk()
 	if (!this->fileName.isEmpty()) {
 		struct stat st;
 		memset(&st, 0, sizeof(struct stat));
-		bool valid = (stat(this->fileName.toLocal8Bit(), &st) == 0);
+		bool valid = (stat(this->fileName.toStdString().c_str(), &st) == 0);
 		// If file isn't there, just return and use current editor text
 		if (!valid) return false;
 
@@ -1904,11 +1901,11 @@ void MainWindow::parseTopLevelDocument(bool rebuildParameterWidget)
 	this->last_compiled_doc = editor->toPlainText();
 
 	auto fulltext =
-		std::string(this->last_compiled_doc.toUtf8().constData()) +
+		this->last_compiled_doc.toStdString() +
 		"\n\x03\n" + commandline_commands;
 	
-	auto fnameba = this->fileName.toLocal8Bit();
-	const char* fname = this->fileName.isEmpty() ? "" : fnameba;
+	auto fnameba = this->fileName.toStdString();
+	const std::string fname = this->fileName.isEmpty() ? "" : fnameba;
 	delete this->parsed_module;
 	this->root_module = parse(this->parsed_module, fulltext, fname, fname, false) ? this->parsed_module : nullptr;
 
@@ -2131,7 +2128,7 @@ void MainWindow::sendToOctoPrint()
 		userFileName = fileInfo.baseName() + "." + fileFormat.toLower();
 	}
 
-	exportFileByName(this->root_geom, exportFileFormat, exportFileName.toLocal8Bit().constData(), exportFileName.toUtf8());
+	exportFileByName(this->root_geom, exportFileFormat, exportFileName.toStdString());
 
 	try {
 		this->progresswidget = new ProgressWidget(this);
@@ -2170,7 +2167,7 @@ void MainWindow::sendToPrintService()
 	const QString exportFilename = exportFile.fileName();
 	
 	//Render the stl to a temporary file:
-	exportFileByName(this->root_geom, FileFormat::STL, exportFilename.toLocal8Bit().constData(), exportFilename.toUtf8());
+	exportFileByName(this->root_geom, FileFormat::STL, exportFilename.toStdString());
 
 	//Create a name that the order process will use to refer to the file. Base it off of the project name
 	QString userFacingName = "unsaved.stl";
@@ -2199,11 +2196,11 @@ void MainWindow::sendToPrintService()
 	{
 		this->progresswidget = new ProgressWidget(this);
 		connect(this->progresswidget, SIGNAL(requestShow()), this, SLOT(showProgress()));
-        const QString partUrl = PrintService::inst()->upload(userFacingName, fileContentBase64, [this](double v) -> bool { return network_progress_func(v); });
+		const QString partUrl = PrintService::inst()->upload(userFacingName, fileContentBase64, [this](double v) -> bool { return network_progress_func(v); });
 		QDesktopServices::openUrl(QUrl{partUrl});
 	} catch (const NetworkException& e) {
 		PRINTB("ERROR: %s", e.getErrorMessage().toStdString());
-    }
+	}
 
 	updateStatusBar(nullptr);
 #endif
@@ -2399,7 +2396,7 @@ void MainWindow::actionDisplayCSGProducts()
 	e->setWindowTitle("CSG Products Dump");
 	e->setReadOnly(true);
 	e->setPlainText(QString("\nCSG before normalization:\n%1\n\n\nCSG after normalization:\n%2\n\n\nCSG rendering chain:\n%3\n\n\nHighlights CSG rendering chain:\n%4\n\n\nBackground CSG rendering chain:\n%5\n")
-									
+
 	.arg(this->csgRoot ? QString::fromUtf8(this->csgRoot->dump().c_str()) : "N/A",
 	this->normalizedRoot ? QString::fromUtf8(this->normalizedRoot->dump().c_str()) : "N/A",
 	this->root_products ? QString::fromUtf8(this->root_products->dump().c_str()) : "N/A",
@@ -2480,14 +2477,14 @@ bool MainWindow::canExport(unsigned int dim)
 	if (N && !N->p3->is_simple()) {
 		PRINT("UI-WARNING: Object may not be a valid 2-manifold and may need repair! See https://en.wikibooks.org/wiki/OpenSCAD_User_Manual/STL_Import_and_Export");
 	}
-	
+
 	return true;
 }
 
 #ifdef ENABLE_CGAL
 void MainWindow::actionExport(FileFormat format, const char *type_name, const char *suffix, unsigned int dim)
 #else
-	void MainWindow::actionExport(FileFormat, QString, QString, unsigned int, QString)
+void MainWindow::actionExport(FileFormat, QString, QString, unsigned int, QString)
 #endif
 {
     //Setting filename skips the file selection dialog and uses the path provided instead.
@@ -2509,10 +2506,9 @@ void MainWindow::actionExport(FileFormat format, const char *type_name, const ch
 	}
 	this->export_paths[suffix] = exportFilename;
 	exportFileByName(this->root_geom, format,
-		exportFilename.toLocal8Bit().constData(),
-		exportFilename.toUtf8());
+		exportFilename.toStdString());
 	PRINTB("%s export finished: %s",
-		type_name % exportFilename.toUtf8().constData());
+		type_name % exportFilename.toStdString());
 
 	clearCurrentOutput();
 #endif /* ENABLE_CGAL */
@@ -2566,9 +2562,9 @@ void MainWindow::actionExportCSG()
 		return;
 	}
 
-	std::ofstream fstream(csg_filename.toLocal8Bit());
+	nowide::ofstream fstream(csg_filename.toStdString().c_str());
 	if (!fstream.is_open()) {
-		PRINTB("Can't open file \"%s\" for export", csg_filename.toLocal8Bit().constData());
+		PRINTB("Can't open file \"%s\" for export", csg_filename.toStdString());
 	}
 	else {
 		fstream << this->tree.getString(*this->root_node, "\t") << "\n";
@@ -2584,13 +2580,13 @@ void MainWindow::actionExportImage()
 {
 	setCurrentOutput();
 
-  // Grab first to make sure dialog box isn't part of the grabbed image
+	// Grab first to make sure dialog box isn't part of the grabbed image
 	qglview->grabFrame();
 	const auto suffix = ".png";
 	auto img_filename = QFileDialog::getSaveFileName(this,
 			_("Export Image"),  exportPath(suffix), _("PNG Files (*.png)"));
 	if (!img_filename.isEmpty()) {
-		qglview->save(img_filename.toLocal8Bit().constData());
+		qglview->save(img_filename.toStdString());
 		this->export_paths[suffix] = img_filename;
 	}
 
@@ -2853,7 +2849,7 @@ void MainWindow::on_consoleDock_visibilityChanged(bool)
 
 void MainWindow::on_parameterDock_visibilityChanged(bool)
 {
-    parameterTopLevelChanged(parameterDock->isFloating());
+	parameterTopLevelChanged(parameterDock->isFloating());
 }
 
 void MainWindow::editorTopLevelChanged(bool topLevel)
@@ -2868,7 +2864,7 @@ void MainWindow::consoleTopLevelChanged(bool topLevel)
 
 void MainWindow::parameterTopLevelChanged(bool topLevel)
 {
-    setDockWidgetTitle(parameterDock, QString(_("Customizer")), topLevel);
+	setDockWidgetTitle(parameterDock, QString(_("Customizer")), topLevel);
 }
 
 void MainWindow::setDockWidgetTitle(QDockWidget *dockWidget, QString prefix, bool topLevel)
@@ -3087,7 +3083,7 @@ void MainWindow::quit()
 	QCloseEvent ev;
 	QApplication::sendEvent(QApplication::instance(), &ev);
 	if (ev.isAccepted()) QApplication::instance()->quit();
-  // FIXME: Cancel any CGAL calculations
+	// FIXME: Cancel any CGAL calculations
 #ifdef Q_OS_MAC
 	CocoaUtils::endApplication();
 #endif

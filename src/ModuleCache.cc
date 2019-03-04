@@ -5,9 +5,8 @@
 #include "openscad.h"
 
 #include <boost/format.hpp>
+#include <nowide/fstream.hpp>
 
-#include <stdio.h>
-#include <fstream>
 #include <sys/stat.h>
 #include <algorithm>
 
@@ -41,7 +40,6 @@ std::time_t ModuleCache::evaluate(const std::string &mainFile,const std::string 
 	// Create cache ID
 	struct stat st;
 	bool valid = (StatCache::stat(filename.c_str(), st) == 0);
-
 	// If file isn't there, just return and let the cache retain the old module
 	if (!valid) return 0;
 
@@ -92,7 +90,7 @@ std::time_t ModuleCache::evaluate(const std::string &mainFile,const std::string 
 
 		std::string text;
 		{
-			std::ifstream ifs(filename.c_str());
+			nowide::ifstream ifs(filename.c_str());
 			if (!ifs.is_open()) {
 				PRINTB("WARNING: Can't open library file '%s'\n", filename);
 				return 0;

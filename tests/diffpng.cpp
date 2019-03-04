@@ -69,7 +69,7 @@ LodePNG Examples
 #include <cstdlib>
 #include <cassert>
 #include <cmath>
-#include <iostream>
+#include <nowide/iostream.hpp>
 #include <stdint.h>
 #include <sstream>
 #include <string>
@@ -170,7 +170,7 @@ public:
 
 	void WriteToFile(const string &filename) const
 	{
-		cout << "WriteToFile:" << filename << "\n";
+		nowide::cout << "WriteToFile:" << filename << "\n";
 
 		unsigned width = this->Width, height = this->Height;
 		vector<uint8_t> image;
@@ -193,23 +193,23 @@ public:
 		//The image argument has width * height RGBA pixels or width * height * 4 bytes
 		unsigned error = lodepng::encode(filename.c_str(), image, width, height);
 
-		if(error) cout << "encoder error " << error << ": "<< lodepng_error_text(error) << endl;
+		if(error) nowide::cout << "encoder error " << error << ": "<< lodepng_error_text(error) << endl;
 	}
 
 	static RGBAImage *ReadFromFile(const string &filename)
 	{
-		cout << "reading from file:" << filename << "\n";
+		nowide::cout << "reading from file:" << filename << "\n";
 		vector<uint8_t> lodepng_image; //the raw pixels
 		unsigned width, height;
 		unsigned error = lodepng::decode(lodepng_image, width, height, filename.c_str());
 		if (error) {
-			cout << "decoder error " << error << ": " << lodepng_error_text(error) << endl;
+			nowide::cout << "decoder error " << error << ": " << lodepng_error_text(error) << endl;
 			return NULL;
 		}
 
 		//the pixels are now in the vector "image", 4 bytes per pixel, 
 		//ordered RGBARGBA..., use it as texture, draw it, ...
-		cout << "width " << width << ", height " << height << "\n";
+		nowide::cout << "width " << width << ", height " << height << "\n";
 
 		RGBAImage *rgbaimg = new RGBAImage(width,height,filename);
 
@@ -332,7 +332,7 @@ public:
 */
 
 string copyright(
-	"diffpng version 2014,\n\
+"diffpng version 2014,\n\
 based on PerceptualDiff Copyright (C) 2006 Yangli Hector Yee\n\
 diffpng and PerceptualDiff comes with ABSOLUTELY NO WARRANTY;\n\
 This is free software, and you are welcome\n\
@@ -346,13 +346,13 @@ Compares image1 and image2 using modified Yee's perceptual difference engine.\n\
 Returns 0 on MATCH (perceptually similar), 1 on DIFFERS \n\
 \n\
 Options:\n\
- --fov deg	 Field of view in degrees (0.1 to 89.9)\n\
+ --fov deg       Field of view in degrees (0.1 to 89.9)\n\
  --threshold p   % of pixels p below which differences are ignored\n\
- --gamma g	 Value to convert rgb into linear space (default 2.2)\n\
+ --gamma g       Value to convert rgb into linear space (default 2.2)\n\
  --luminance l   White luminance (default 100.0 cdm^-2)\n\
  --luminanceonly Only consider luminance; ignore chroma (color) in the comparison\n\
  --colorfactor   How much of color to use, 0.0 to 1.0, 0.0 = ignore color.\n\
- --sum-errors	 Print a sum of the luminance and color differences.\n\
+ --sum-errors    Print a sum of the luminance and color differences.\n\
  --output o.png  Write difference image to o.png (black=same, red=differ)\n\
  --initmax n     Set the initial maximum number of Laplacian Pyramid Levels\n\
  --finalmax n    Set the final maximum number of Laplacian Pyramid Levels\n\
@@ -369,7 +369,7 @@ static T lexical_cast(const string &input)
 	T output;
 	if (not (ss >> output))
 	{
-		cout << "invalid_argument(""):" << input;
+		nowide::cout << "invalid_argument(""):" << input;
 	}
 	return output;
 }
@@ -449,7 +449,7 @@ public:
 						int temporary = lexical_cast<float>(argv[i]);
 						if (temporary < 0)
 						{
-							cout << " invalid_argument(" <<
+							nowide::cout << " invalid_argument(" <<
 								"-threshold must be positive";
 						}
 						ThresholdPixelsPercent = static_cast<float>(temporary);
@@ -469,7 +469,7 @@ public:
 						MaxPyramidLevels = lexical_cast<int>(argv[i]);
 					}
 					if (MaxPyramidLevels<2 || MaxPyramidLevels>8) {
-						cout << "Error: MaxPyramidLevels must be between >1 and <9\n";
+						nowide::cout << "Error: MaxPyramidLevels must be between >1 and <9\n";
 						return false;
 					}
 				}
@@ -480,7 +480,7 @@ public:
 						FinalMaxPyramidLevels = lexical_cast<int>(argv[i]);
 					}
 					if (FinalMaxPyramidLevels<2 || FinalMaxPyramidLevels>8) {
-						cout << "Error: FinalMaxPyramidLevels must be between >1 and <9\n";
+						nowide::cout << "Error: FinalMaxPyramidLevels must be between >1 and <9\n";
 						return false;
 					}
 				}
@@ -538,12 +538,12 @@ public:
 				}
 				else if (option_matches(argv[i], "help"))
 				{
-					cout << usage;
+					nowide::cout << usage;
 					return false;
 				}
 				else
 				{
-					cerr << "Warningoption/file \"" << argv[i]
+					nowide::cerr << "Warningoption/file \"" << argv[i]
 						  << "\" ignored\n";
 				}
 //			}
@@ -554,7 +554,7 @@ public:
 				{
 					reason = string("; ") + exception.what();
 				}
-				cout << "Invalid argument (" << string(argv[i]) <<
+				nowide::cout << "Invalid argument (" << string(argv[i]) <<
 									 ") for " << argv[i - 1] << reason;
 				return false;
 			}
@@ -578,7 +578,7 @@ public:
 
 	void Print_Args() const
 	{
-		cout << "Field of view is " << FieldOfView << " degrees\n"
+		nowide::cout << "Field of view is " << FieldOfView << " degrees\n"
 			  << "Threshold pixels percent is " << ThresholdPixelsPercent << "%\n"
 			  << "The Gamma is " << Gamma << "\n"
 			  << "The Display's luminance is " << Luminance
@@ -592,7 +592,7 @@ public:
 	RGBAImage *ImgA;	 // Image A
 	RGBAImage *ImgB;	 // Image B
 	RGBAImage *ImgDiff;  // Diff image
-	bool Verbose;						// Print lots of text or not
+	bool Verbose;		 // Print lots of text or not
 	bool LuminanceOnly;  // Only consider luminance; ignore chroma channels in
 						 // the
 						 // comparison.
@@ -876,14 +876,14 @@ bool Yee_Compare_Engine(CompareArgs &args)
 	}
 	if (identical)
 	{
-		cout << "Images are binary identical\n";
+		nowide::cout << "Images are binary identical\n";
 	}
 
 	// assuming colorspaces are in Adobe RGB (1998) convert to XYZ
 	vector<float> aX(dim),aY(dim),aZ(dim),bX(dim),bY(dim),bZ(dim);
 	vector<float> aLum(dim),bLum(dim),aA(dim),bA(dim),aB(dim),bB(dim);
 
-	if (args.Verbose) cout << "Converting RGB to XYZ\n";
+	if (args.Verbose) nowide::cout << "Converting RGB to XYZ\n";
 
 	const unsigned w = args.ImgA->Get_Width();
 	const unsigned h = args.ImgA->Get_Height();
@@ -911,7 +911,7 @@ bool Yee_Compare_Engine(CompareArgs &args)
 
 	if (args.Verbose)
 	{
-		cout << "Constructing Laplacian Pyramids\n";
+		nowide::cout << "Constructing Laplacian Pyramids\n";
 	}
 
 	const LPyramid la(&aLum[0], w, h, args.MaxPyramidLevels);
@@ -923,7 +923,7 @@ bool Yee_Compare_Engine(CompareArgs &args)
 
 	if (args.Verbose)
 	{
-		cout << "Performing test\n";
+		nowide::cout << "Performing test\n";
 	}
 
 	const unsigned adaptation_level = adaptation(num_one_degree_pixels, args.MaxPyramidLevels);
@@ -1099,7 +1099,7 @@ bool ShiftAndTest( CompareArgs &args, RGBAImage &originalB, int xshift, int yshi
 	args.ImgB->SimpleBlur();
 	bool test = Yee_Compare_Engine( args );
 	if (args.ImgDiff) args.ImgDiff->WriteToFile(args.ImgDiff->Get_Name()+".diffshift1.png");
-	cout << "result: " << test << "\n";
+	nowide::cout << "result: " << test << "\n";
 	copy(*args.ImgB, originalB);
 	return test;
 }
@@ -1147,17 +1147,17 @@ bool LevelClimberCompare(CompareArgs &args) {
 	bool test = false;
 
 	while (test==false && args.MaxPyramidLevels<args.FinalMaxPyramidLevels) {
-		cout << "Testing with Max Pyramid Levels=" << args.MaxPyramidLevels << "\n";
+		nowide::cout << "Testing with Max Pyramid Levels=" << args.MaxPyramidLevels << "\n";
 		test = Yee_Compare_Engine( args );
-		cout << "Result: " << test << " ErrorStr:" << args.ErrorStr << "\n";
+		nowide::cout << "Result: " << test << " ErrorStr:" << args.ErrorStr << "\n";
 		if (args.ImgDiff) {
 			std::stringstream s; s<<args.MaxPyramidLevels;
 			args.ImgDiff->WriteToFile(args.ImgDiff->Get_Name()+".diff.maxlevel"+s.str()+".png");
 		}
 		if (test==false) {
 			args.MaxPyramidLevels++;
-			cout << "Test detected differences.\n";
-			if (args.MaxPyramidLevels<args.FinalMaxPyramidLevels) cout << "Retesting.\n\n";
+			nowide::cout << "Test detected differences.\n";
+			if (args.MaxPyramidLevels<args.FinalMaxPyramidLevels) nowide::cout << "Retesting.\n\n";
 		} else {
 			return true;
 		}
@@ -1170,8 +1170,8 @@ bool LevelClimberCompare(CompareArgs &args) {
 	// it is to enable the higher pyramid levels to run at a
 	// reasonable speed.
 	if (test==false) {
-		cout << "\nTests detected differences at final max pyramid level. \n";
-		cout << "Retesting with downsampling and simple blur\n\n";
+		nowide::cout << "\nTests detected differences at final max pyramid level. \n";
+		nowide::cout << "Retesting with downsampling and simple blur\n\n";
 		args.ImgA->DownSample();
 		args.ImgB->DownSample();
 		args.ImgA->SimpleBlur();
@@ -1188,9 +1188,9 @@ bool LevelClimberCompare(CompareArgs &args) {
 			args.ImgDiff->DownSample();
 		}
 		args.ColorFactor = 0.05;
-		cout << "Testing with Max Pyramid Levels=" << args.MaxPyramidLevels << "\n";
+		nowide::cout << "Testing with Max Pyramid Levels=" << args.MaxPyramidLevels << "\n";
 		test = Yee_Compare_Engine( args );
-		cout << "Result: " << test << " ErrorStr:" << args.ErrorStr << "\n";
+		nowide::cout << "Result: " << test << " ErrorStr:" << args.ErrorStr << "\n";
 		if (args.ImgDiff)
 			args.ImgDiff->WriteToFile(args.ImgDiff->Get_Name()+".diff.sampleddown.png");
 		if (test) return true;
@@ -1205,8 +1205,8 @@ bool LevelClimberCompare(CompareArgs &args) {
 
 	if (test==false) {
 		args.ColorFactor = 0.01;
-		cout << "\nTests detected differences after downsample. \n";
-		cout << "Retesting with small pixel shifts\n";
+		nowide::cout << "\nTests detected differences after downsample. \n";
+		nowide::cout << "Retesting with small pixel shifts\n";
 
 		if (ShiftAndTest(args, originalB, -2, 0)) return true;
 		if (ShiftAndTest(args, originalB,  2, 0)) return true;
@@ -1267,7 +1267,7 @@ int main(int argc, char **argv)
 //	{
 		if (not args.Parse_Args(argc, argv))
 		{
-			std::cout << args.ErrorStr << "\n";
+			nowide::cout << args.ErrorStr << "\n";
 			return -1;
 		}
 		else
@@ -1278,22 +1278,22 @@ int main(int argc, char **argv)
 			}
 		}
 
-		std::cout << "\n";
+		nowide::cout << "\n";
 		bool matches = diffpng::LevelClimberCompare(args);
 		if (matches)
 		{
 			if (args.Verbose)
 			{
-				if (interactive()) std::cout << green;
-				std::cout << "MATCHES: result: " << args.ErrorStr << "\n";
-				if (interactive()) std::cout << nocolor;
+				if (interactive()) nowide::cout << green;
+				nowide::cout << "MATCHES: result: " << args.ErrorStr << "\n";
+				if (interactive()) nowide::cout << nocolor;
 			}
 		}
 		else
 		{
-			if (interactive()) std::cout << red;
-			std::cout << "DIFFERS: result: " << args.ErrorStr << "\n";
-			if (interactive()) std::cout << nocolor;
+			if (interactive()) nowide::cout << red;
+			nowide::cout << "DIFFERS: result: " << args.ErrorStr << "\n";
+			if (interactive()) nowide::cout << nocolor;
 		}
 
 	if (args.FlipExit) matches = !matches;
@@ -1302,7 +1302,7 @@ int main(int argc, char **argv)
 //	}
 /*	catch (...)
 	{
-		std::cerr << "Exception" << std::endl;
+		nowide::cerr << "Exception" << std::endl;
 		return 1;
 	}
 */

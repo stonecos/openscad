@@ -29,7 +29,7 @@
 #include "printutils.h"
 #include "calc.h"
 
-#include <fstream>
+#include <nowide/fstream.hpp>
 #include <assert.h>
 #include <unordered_map>
 #include <boost/lexical_cast.hpp>
@@ -79,11 +79,13 @@ DxfData::DxfData(double fn, double fs, double fa,
 								 const std::string &filename, const std::string &layername, 
 								 double xorigin, double yorigin, double scale)
 {
-	std::ifstream stream(filename.c_str());
+	nowide::ifstream stream(filename.c_str());
 	if (!stream.good()) {
 		PRINTB("WARNING: Can't open DXF file '%s'.", filename);
 		return;
 	}
+	// Make sure locale doesn't influence parsing
+	std::locale oldloc = std::locale::global(std::locale::classic());
 
 	Grid2d<std::vector<int>> grid(GRID_COARSE);
 	std::vector<Line> lines;                       // Global lines
@@ -527,6 +529,8 @@ DxfData::DxfData(double fn, double fs, double fa,
 	printf("--------------------\n");
 	fflush(stdout);
 #endif
+
+	std::locale::global(oldloc);
 }
 
 /*!

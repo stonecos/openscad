@@ -50,7 +50,6 @@
 #include"parameter/parameterset.h"
 #include <string>
 #include <vector>
-#include <fstream>
 
 #ifdef ENABLE_CGAL
 #include "CGAL_Nef_polyhedron.h"
@@ -67,6 +66,8 @@
 #include <boost/range/adaptor/transformed.hpp>
 #include <boost/program_options.hpp>
 #include <boost/filesystem.hpp>
+#include <nowide/args.hpp>
+#include <nowide/fstream.hpp>
 
 #ifdef __APPLE__
 #include "AppleEvents.h"
@@ -93,10 +94,10 @@ static bool arg_info = false;
 static std::string arg_colorscheme;
 
 
-class Echostream : public std::ofstream
+class Echostream : public nowide::ofstream
 {
 public:
-	Echostream(const char * filename) : std::ofstream(filename) {
+	Echostream(const char * filename) : nowide::ofstream(filename) {
 		set_output_handler( &Echostream::output, this );
 	}
 	static void output(const std::string &msg, void *userdata) {
@@ -125,11 +126,11 @@ static void version()
 
 static int info()
 {
-	std::cout << LibraryInfo::info() << "\n\n";
+	nowide::cout << LibraryInfo::info() << "\n\n";
 
 	try {
 		OffscreenView glview(512,512);
-		std::cout << glview.getRendererInfo() << "\n";
+		nowide::cout << glview.getRendererInfo() << "\n";
 	} catch (int error) {
 		PRINTB("Can't create OpenGL OffscreenView. Code: %i. Exiting.\n", error);
 		return 1;
@@ -235,7 +236,7 @@ Camera get_camera(const po::variables_map &vm)
 #define OPENSCAD_QTGUI 1
 #endif
 static bool checkAndExport(shared_ptr<const Geometry> root_geom, unsigned nd,
-													 FileFormat format, const char *filename)
+													 FileFormat format, const std::string &filename)
 {
 	if (root_geom->getDimension() != nd) {
 		PRINTB("Current top level object is not a %dD object.", nd);
@@ -245,7 +246,7 @@ static bool checkAndExport(shared_ptr<const Geometry> root_geom, unsigned nd,
 		PRINT("Current top level object is empty.");
 		return false;
 	}
-	exportFileByName(root_geom, format, filename, filename);
+	exportFileByName(root_geom, format, filename);
 	return true;
 }
 
@@ -335,7 +336,7 @@ int cmdline(const char *deps_output_file, const std::string &filename, const cha
 
 	handle_dep(filename);
 
-	std::ifstream ifs(filename.c_str());
+	nowide::ifstream ifs(filename.c_str());
 	if (!ifs.is_open()) {
 		PRINTB("Can't open input file '%s'!\n", filename.c_str());
 		return 1;
@@ -388,7 +389,7 @@ int cmdline(const char *deps_output_file, const std::string &filename, const cha
 
 	if (csg_output_file) {
 		fs::current_path(original_path);
-		std::ofstream fstream(csg_output_file);
+		nowide::ofstream fstream(csg_output_file);
 		if (!fstream.is_open()) {
 			PRINTB("Can't open file \"%s\" for export", csg_output_file);
 		}
@@ -400,7 +401,7 @@ int cmdline(const char *deps_output_file, const std::string &filename, const cha
 	}
 	else if (ast_output_file) {
 		fs::current_path(original_path);
-		std::ofstream fstream(ast_output_file);
+		nowide::ofstream fstream(ast_output_file);
 		if (!fstream.is_open()) {
 			PRINTB("Can't open file \"%s\" for export", ast_output_file);
 		}
@@ -415,7 +416,7 @@ int cmdline(const char *deps_output_file, const std::string &filename, const cha
 		auto root_raw_term = csgRenderer.buildCSGTree(*root_node);
 
 		fs::current_path(original_path);
-		std::ofstream fstream(term_output_file);
+		nowide::ofstream fstream(term_output_file);
 		if (!fstream.is_open()) {
 			PRINTB("Can't open file \"%s\" for export", term_output_file);
 		}
@@ -485,7 +486,7 @@ int cmdline(const char *deps_output_file, const std::string &filename, const cha
 
 		if (png_output_file) {
 			auto success = true;
-			std::ofstream fstream(png_output_file,std::ios::out|std::ios::binary);
+			nowide::ofstream fstream(png_output_file,std::ios::out|std::ios::binary);
 			if (!fstream.is_open()) {
 				PRINTB("Can't open file \"%s\" for export", png_output_file);
 				success = false;
@@ -564,8 +565,8 @@ Q_DECLARE_METATYPE(shared_ptr<const Geometry>);
 static QString assemblePath(const fs::path& absoluteBaseDir,
                             const string& fileName) {
   if (fileName.empty()) return "";
-  auto qsDir = QString::fromLocal8Bit(absoluteBaseDir.generic_string().c_str());
-  auto qsFile = QString::fromLocal8Bit(fileName.c_str());
+  auto qsDir = QString::fromStdString(absoluteBaseDir.generic_string());
+  auto qsFile = QString::fromStdString(fileName);
   // if qsfile is absolute, dir is ignored. (see documentation of QFileInfo)
   QFileInfo info(qsDir, qsFile);
   return info.absoluteFilePath();
@@ -655,7 +656,7 @@ int gui(vector<string> &inputFiles, const fs::path &original_path, int argc, cha
 
 	QSettingsCached settings;
 	if (settings.value("advanced/localization", true).toBool()) {
-		localization_init();
+	        localization_init();
 	}
 
 #ifdef Q_OS_MAC
@@ -827,24 +828,21 @@ bool flagConvert(std::string str){
 
 int main(int argc, char **argv)
 {
+	nowide::args a(argc, argv); // Fix arguments - make them UTF-8
+
 	int rc = 0;
 	StackCheck::inst()->init();
 
 #ifdef OPENSCAD_QTGUI
 	{   // Need a dummy app instance to get the application path but it needs to be destroyed before the GUI is launched.
 		QCoreApplication app(argc, argv);
-		PlatformUtils::registerApplicationPath(app.applicationDirPath().toLocal8Bit().constData());
+		PlatformUtils::registerApplicationPath(app.applicationDirPath().toStdString());
 	}
 #else
 	PlatformUtils::registerApplicationPath(fs::absolute(boost::filesystem::path(argv[0]).parent_path()).generic_string());
 #endif
 	
-#ifdef Q_OS_MAC
-	bool isGuiLaunched = getenv("GUI_LAUNCHED") != nullptr;
-	if (isGuiLaunched) set_output_handler(CocoaUtils::nslog, nullptr);
-#else
-	PlatformUtils::ensureStdIO();
-#endif
+	PlatformUtils::initPlatform();
 
 #ifdef ENABLE_CGAL
 	// Causes CGAL errors to abort directly instead of throwing exceptions
@@ -857,7 +855,7 @@ int main(int argc, char **argv)
 
 	const char *output_file = nullptr;
 	const char *deps_output_file = nullptr;
-	
+
 	ViewOptions viewOptions{};
 	po::options_description desc("Allowed options");
 	desc.add_options()

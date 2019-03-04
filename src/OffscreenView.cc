@@ -1,7 +1,6 @@
 #include "OffscreenView.h"
 #include "system-gl.h"
 #include <math.h>
-#include <stdio.h>
 #include <string.h>
 #include <cstdlib>
 #include <sstream>
@@ -27,9 +26,9 @@ void OffscreenView::display_opencsg_warning()
 }
 #endif
 
-bool OffscreenView::save(const char *filename)
+bool OffscreenView::save(const std::string &filename)
 {
-  return save_framebuffer(this->ctx, filename);
+  return save_framebuffer(this->ctx, filename.c_str());
 }
 
 bool OffscreenView::save(std::ostream &output)

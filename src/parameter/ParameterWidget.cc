@@ -41,13 +41,11 @@
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
 
-#include <fstream>
-
 namespace pt = boost::property_tree;
 
 #include <QInputDialog>
 #include <QMessageBox>
-#include <fstream>
+#include <nowide/fstream.hpp>
 
 ParameterWidget::ParameterWidget(QWidget *parent) : QWidget(parent)
 {
@@ -94,7 +92,7 @@ void ParameterWidget::resetParameter()
 
 	defaultParameter();
 	if(comboBoxPreset->currentIndex() != 0){ //0 is "design default values"
-		const std::string v = comboBoxPreset->itemData(currPreset).toString().toUtf8().constData();
+		const std::string v = comboBoxPreset->itemData(currPreset).toString().toStdString();
 		applyParameterSet(v);
 	}
 	emit previewRequested();
@@ -146,7 +144,7 @@ void ParameterWidget::readFile(QString scadFile)
 		readable = this->setMgr->readParameterSet(this->jsonFile);
 
 		//check whether file is writeable or not
-		if (std::fstream(this->jsonFile, std::ios::app)) writeable = true;
+		if (nowide::fstream(this->jsonFile, std::ios::app)) writeable = true;
 	}
 
 	if(writeable || !exists){
@@ -248,7 +246,7 @@ void ParameterWidget::onSetChanged(int idx)
 	defaultParameter();
 	if(idx!=0){ //0 is "design default values"
 		//apply the change
-		const std::string v = comboBoxPreset->itemData(idx).toString().toUtf8().constData();
+		const std::string v = comboBoxPreset->itemData(idx).toString().toStdString();
 		applyParameterSet(v);
 	}
 	emit previewRequested(false);

@@ -38,7 +38,6 @@
 #include <cstdint>
 #include <array>
 #include <sstream>
-#include <fstream>
 #include <unordered_map>
 #include <boost/functional/hash.hpp>
 #include <boost/tokenizer.hpp>
@@ -49,6 +48,8 @@ using namespace boost::assign; // bring 'operator+=()' into scope
 
 #include <boost/filesystem.hpp>
 namespace fs = boost::filesystem;
+
+#include <nowide/fstream.hpp>
 
 class SurfaceModule : public AbstractModule
 {
@@ -161,7 +162,7 @@ img_data_t SurfaceNode::read_png_or_dat(std::string filename) const
 img_data_t SurfaceNode::read_dat(std::string filename) const
 {
 	img_data_t data;
-	std::ifstream stream(filename.c_str());
+	nowide::ifstream stream(filename.c_str());
 
 	if (!stream.good()) {
 		PRINTB("WARNING: Can't open DAT file '%s'.", filename);
