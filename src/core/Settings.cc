@@ -232,7 +232,7 @@ SettingsEntryList<LocalAppParameter> Settings::localAppParameterList("printing",
 SettingsEntryEnum<std::string> Settings::renderBackend3D("advanced", "renderBackend3D", {
   {"CGAL",     "cgal",     "CGAL (old/slow)"},
   {"Manifold", "manifold", "Manifold (new/fast)"}
-}, "CGAL");
+}, "Manifold");
 SettingsEntryEnum<std::string> Settings::toolbarExport3D("advanced", "toolbarExport3D", createFileFormatItems(fileformat::all3D()), fileformat::info(FileFormat::ASCII_STL).description);
 SettingsEntryEnum<std::string> Settings::toolbarExport2D("advanced", "toolbarExport2D", createFileFormatItems(fileformat::all2D()), fileformat::info(FileFormat::DXF).description);
 
