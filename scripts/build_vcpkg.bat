@@ -1,6 +1,8 @@
 @echo off
 setlocal enabledelayedexpansion
 
+rem vcpkg install --triplet=x64-windows
+
 mkdir build
 
 rem Modify toolchain to your vcpkg installation
