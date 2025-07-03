@@ -1,11 +1,9 @@
 @echo off
 setlocal enabledelayedexpansion
 
-rem vcpkg install --triplet=x64-windows
-
+vcpkg install --triplet=x64-windows
 mkdir build
-
-rem Modify toolchain to your vcpkg installation
+rem Modify toolchain to your vcpkg installation directory
 cmake -B build -S . ^
     -DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake ^
     -DVCPKG_TARGET_TRIPLET=x64-windows ^
@@ -18,6 +16,5 @@ cmake -B build -S . ^
     -G "Visual Studio 17 2022" ^
     -A x64
 
-rem Currently, only Debug builds work completly. Hence, the Release build is commented out.
 cmake --build build --config Debug
-rem cmake --build build --config Release
+cmake --build build --config Release
