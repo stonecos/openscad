@@ -506,8 +506,67 @@ std::unique_ptr<const Geometry> SquareNode::createGeometry() const
     v2 -= Vector2d(this->x / 2, this->y / 2);
   }
 
+  // Return early in easy case of no rounded corners.
+  if ( this->r[0]<=0 && this->r[1]<=0 && this->r[2]<=0 && this->r[3]<=0 ) {
+    Outline2d o;
+    o.vertices = {v1, {v2[0], v1[1]}, v2, {v1[0], v2[1]}};
+    return std::make_unique<Polygon2d>(o);  
+  }
+
   Outline2d o;
-  o.vertices = {v1, {v2[0], v1[1]}, v2, {v1[0], v2[1]}};
+  if (this->r[0]>0 && this->r[0]+this->r[3]<=this->y && this->r[0]+this->r[1]<=this->x ) {
+    auto const r = this->r[0];
+    auto fragments = std::max( Calc::get_fragments_from_r(r, this->fn, this->fs, this->fa) / 4, 2 );
+
+    o.vertices.push_back( { v2[0], v2[1]-r });
+    for ( auto i = 1; i < fragments; ++i ) {
+      auto angle = i * M_PI_2 / fragments;
+      o.vertices.push_back( {v2[0]+r*(cos(angle)-1), v2[1]+r*(sin(angle)-1) } );
+    }
+    o.vertices.push_back( { v2[0]-r, v2[1] });
+  } else {
+    o.vertices.push_back( v2 );
+  }
+  if (this->r[1]>0 && this->r[0]+this->r[1]<=this->x && this->r[1]+this->r[2]<=this->y ) {
+    auto const r = this->r[0];
+    auto fragments = std::max( Calc::get_fragments_from_r(r, this->fn, this->fs, this->fa) / 4, 2);
+
+    o.vertices.push_back( { v1[0]+r, v2[1] });
+    for ( auto i = 1; i < fragments; ++i ) {
+      auto angle = i * M_PI_2 / fragments + M_PI_2;
+      o.vertices.push_back( {v1[0]+r*(cos(angle)+1), v2[1]+r*(sin(angle)-1) } );
+    }
+    o.vertices.push_back( { v1[0], v2[1]-r });
+  } else {
+    o.vertices.push_back( {v1[0],v2[1]} );
+  }
+  if (this->r[2]>0 && this->r[1]+this->r[2]<=this->y && this->r[2]+this->r[3]<=this->x ) {
+    auto const r = this->r[2];
+    auto fragments = std::max( Calc::get_fragments_from_r(r, this->fn, this->fs, this->fa) / 4, 2 );
+
+    o.vertices.push_back( { v1[0], v1[1]+r });
+    for ( auto i = 1; i < fragments; ++i ) {
+      auto angle = i * M_PI_2 / fragments + M_PI;
+      o.vertices.push_back( {v1[0]+r*(cos(angle)+1), v1[1]+r*(sin(angle)+1) } );
+    }
+    o.vertices.push_back( {v1[0]+r, v1[1]} );
+  } else {
+    o.vertices.push_back( v1 );
+  }
+  if (this->r[3]>0 && this->r[2]+this->r[3]<=this->x && this->r[3]+this->r[0]<=this->y ) {
+    auto const r = this->r[3];
+    auto fragments = std::max( Calc::get_fragments_from_r(r, this->fn, this->fs, this->fa) / 4, 2 );
+
+    o.vertices.push_back( { v2[0]-r, v1[1] });
+    for ( auto i = 1; i < fragments; ++i ) {
+      auto angle = i * M_PI_2 / fragments - M_PI_2;
+      o.vertices.push_back( {v2[0]+r*(cos(angle)-1), v1[1]+r*(sin(angle)+1) } );
+    }
+    o.vertices.push_back( { v2[0], v1[1]+r });
+  } else {
+    o.vertices.push_back( { v2[0], v1[1] } );
+  }
+
   return std::make_unique<Polygon2d>(o);
 }
 
@@ -515,7 +574,9 @@ static std::shared_ptr<AbstractNode> builtin_square(const ModuleInstantiation *i
 {
   auto node = std::make_shared<SquareNode>(inst);
 
-  Parameters parameters = Parameters::parse(std::move(arguments), inst->location(), {"size", "center"});
+  Parameters parameters = Parameters::parse(std::move(arguments), inst->location(), {"size", "r", "center"});
+
+  set_fragments(parameters, inst, node->fn, node->fs, node->fa);
 
   const auto& size = parameters["size"];
   if (size.isDefined()) {
@@ -534,6 +595,31 @@ static std::shared_ptr<AbstractNode> builtin_square(const ModuleInstantiation *i
       }
     }
   }
+
+  const auto& radii = parameters["r"];
+  if ( radii.isDefined() ) {
+    bool converted = false;
+    converted |= radii.getDouble(node->r[0]);
+    converted |= radii.getDouble(node->r[1]);
+    converted |= radii.getDouble(node->r[2]);
+    converted |= radii.getDouble(node->r[3]);
+    converted |= radii.getVec4(node->r[0], node->r[1], node->r[2], node->r[3]);
+    if (!converted) {
+      LOG(message_group::Warning, inst->location(), parameters.documentRoot(), "Unable to convert square(..., r=%1$s, ...) parameter to a number or a vec4 of numbers", radii.toEchoStringNoThrow());
+    } else if (OpenSCAD::rangeCheck) {
+      bool ok = true;
+      ok &= (node->r[0] >= 0) && (node->r[1] >= 0) && (node->r[2] >= 0) && (node->r[3] >= 0);
+      ok &= std::isfinite(node->r[0]) && std::isfinite(node->r[1]) && std::isfinite(node->r[2]) && std::isfinite(node->r[3]);
+      if (!ok) {
+        LOG(message_group::Warning, inst->location(), parameters.documentRoot(), "square(..., r=%1$s, ...)", radii.toEchoStringNoThrow());
+      }
+
+      if ( std::max(node->r[0]+node->r[1], node->r[2]+node->r[3])>node->x || std::max(node->r[1]+node->r[2], node->r[0]+node->r[3])>node->y) {
+        LOG(message_group::Warning, inst->location(), parameters.documentRoot(), "square(..., r=%1$s, ...) radii do not fit in square", radii.toEchoStringNoThrow());
+      }
+    }
+  }
+
   if (parameters["center"].type() == Value::Type::BOOL) {
     node->center = parameters["center"].toBool();
   }
@@ -743,7 +829,9 @@ void register_builtin_primitives()
   Builtins::init("square", new BuiltinModule(builtin_square),
                  {
                      "square(size, center = true)",
+                     "square(size, r = radii, center = true)",
                      "square([width,height], center = true)",
+                     "square([width,height], r = radii, center = true)",
                  });
 
   Builtins::init("circle", new BuiltinModule(builtin_circle),

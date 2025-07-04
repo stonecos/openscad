@@ -138,7 +138,9 @@ public:
   std::string name() const override { return "square"; }
   std::unique_ptr<const Geometry> createGeometry() const override;
 
+  double fn, fs, fa;
   double x = 1, y = 1;
+  std::array<double,4> r = { 0, 0, 0, 0 };
   bool center = false;
 };
 
